@@ -32,8 +32,6 @@ else:
     dest_dir = os.path.dirname(dest_realpath)
     output_filename = dest_realpath
 
-output_file = open(output_filename, 'w')
-
 def getInspectFiles():
     inspect_files = []
     for path, subdirs, files in os.walk(INSPECT_DIR):
@@ -59,6 +57,12 @@ def isRelativeImport(line):
 def extractImportFilepath(line):
     return line.split("'")[1]
 
+def appendDotSlash(fp):
+    if (not (fp.startswith('./') or fp.startswith('../'))):
+        return "./" + fp
+    else:
+        return fp
+
 def generateNewImportStatement(line, dest_dir):
     parsed = line.split("'")
     filepath = parsed[1]
@@ -67,12 +71,17 @@ def generateNewImportStatement(line, dest_dir):
     newfilepath = os.path.relpath(os.path.realpath(filepath), os.path.dirname(dest_dir))
     os.chdir(cwd)
 
-    if (not (newfilepath.startswith('./') or newfilepath.startswith('../'))):
-        newfilepath = "./" + newfilepath
+    newfilepath = appendDotSlash(newfilepath)
 
     parsed[1] = "'" + newfilepath + "'"
     return "".join(parsed)
 
+def dumbGenerateNewImportStatement(line, fp):
+    parsed = line.split("'")
+    parsed[1] = "'" + fp + "'"
+    return "".join(parsed)
+
+output_file = open(output_filename + ".tmp", 'w')
 for line in f:
     if (not isRelativeImport(line)):
         output_file.write(line)
@@ -87,8 +96,14 @@ for filepath in inspect_files:
 
     for line in inspect_file:
         if(not isRelativeImport(line)):
+          #output_file.write(line)
             continue
 
         if (os.path.basename(extractImportFilepath(line)) == src_basename):
-            print(inspect_file.name)
+            newfilepath = os.path.relpath(dest_realpath, os.path.dirname(inspect_file.name))
+            newfilepath = os.path.splitext(newfilepath)[0]
+            print(dest_realpath)
+            print(os.path.dirname(inspect_file.name))
             print(line)
+            print(dumbGenerateNewImportStatement(line, newfilepath))
+            print("***********")
