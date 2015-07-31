@@ -14,9 +14,20 @@ src_filename = sys.argv[1]
 dest_filename = sys.argv[2]
 
 f = open(src_filename, 'r')
-dest_file = open(dest_filename, 'w')
 
+src_realpath = os.path.realpath(src_filename)
 dest_realpath = os.path.realpath(dest_filename)
+
+src_dir = os.path.dirname(src_realpath)
+
+if (os.path.isdir(dest_realpath)):
+    dest_dir = dest_realpath
+    output_filename = os.path.join(dest_dir, os.path.basename(src_realpath))
+else:
+    dest_dir = os.path.dirname(dest_realpath)
+    output_filename = dest_realpath
+
+output_file = open(output_filename, 'w')
 
 def isRelativeImport(line):
     if (line.startswith('import ')):
@@ -33,14 +44,21 @@ def extractImportFilepath(line):
 def generateNewImportStatement(line, dest_dir):
     parsed = line.split("'")
     filepath = parsed[1]
-    newfilepath = os.path.relpath(filepath, dest_dir)
+    cwd = os.getcwd()
+    os.chdir(src_dir)
+    newfilepath = os.path.relpath(os.path.realpath(filepath), os.path.dirname(dest_dir))
+    os.chdir(cwd)
+
+    if (not (newfilepath.startswith('./') or newfilepath.startswith('../'))):
+        newfilepath = "./" + newfilepath
+
     parsed[1] = "'" + newfilepath + "'"
     return "".join(parsed)
 
 for line in f:
     if (not isRelativeImport(line)):
-        dest_file.write(line)
+        output_file.write(line)
         continue
     
     newImportStatement = generateNewImportStatement(line, dest_realpath)
-    dest_file.write(newImportStatement)
+    output_file.write(newImportStatement)
