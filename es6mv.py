@@ -1,8 +1,9 @@
 import os
+import shutil
 import sys
 
 #GLOBALS
-INSPECT_DIR = "/home/reggi/c0dez/thm-dev/THM/frontend_v2/js/components/"
+INSPECT_DIR = "/home/reggi/play/components2/"
 
 #flags
 WRITE_ENABLED = False
@@ -76,12 +77,12 @@ def generateNewImportStatement(line, dest_dir):
     parsed[1] = "'" + newfilepath + "'"
     return "".join(parsed)
 
-def dumbGenerateNewImportStatement(line, fp):
+def dumbGenerateImportStatement(line, fp):
     parsed = line.split("'")
     parsed[1] = "'" + fp + "'"
     return "".join(parsed)
 
-output_file = open(output_filename + ".tmp", 'w')
+output_file = open(output_filename, 'w')
 for line in f:
     if (not isRelativeImport(line)):
         output_file.write(line)
@@ -89,21 +90,37 @@ for line in f:
     
     newImportStatement = generateNewImportStatement(line, dest_realpath)
     output_file.write(newImportStatement)
+output_file.close()
 
 inspect_files = getInspectFiles()
 for filepath in inspect_files:
+    changes_made = False
     inspect_file = open(filepath, 'r')
+    inspect_output_file = open(filepath + ".tmp", 'w') 
 
     for line in inspect_file:
         if(not isRelativeImport(line)):
-          #output_file.write(line)
+            inspect_output_file.write(line)
             continue
-
+        
         if (os.path.basename(extractImportFilepath(line)) == src_basename):
-            newfilepath = os.path.relpath(dest_realpath, os.path.dirname(inspect_file.name))
-            newfilepath = os.path.splitext(newfilepath)[0]
+            newfilepath = os.path.relpath(output_filename, os.path.dirname(inspect_file.name))
             print(dest_realpath)
             print(os.path.dirname(inspect_file.name))
-            print(line)
-            print(dumbGenerateNewImportStatement(line, newfilepath))
-            print("***********")
+            print(newfilepath)
+            newfilepath = os.path.splitext(newfilepath)[0]
+            print(newfilepath)
+            inspect_output_file.write(dumbGenerateImportStatement(line, newfilepath))
+            print(filepath)
+            print("Old: " + line.rstrip())
+            print("New: " + dumbGenerateImportStatement(line, newfilepath).rstrip())
+            changes_made = True
+
+    inspect_output_file.close()
+    if (changes_made):
+        shutil.move(filepath + ".tmp", filepath)
+    else:
+        os.remove(filepath + ".tmp")
+
+#delete original file
+os.remove(src_realpath)
