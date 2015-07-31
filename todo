@@ -1,3 +1,23 @@
 -add overwrite check
 -add check for same src/dest basename
 -create tests
+-movign to same file, deletes it
+
+tests...
+- test directories with and without /
+
+Naming conventions
+    Filepath - Relative or absolute filepath of a file
+    relpath - relative filepath
+    realpath - absolute filepath
+    Filename - trailing components of a filepath
+                ex. basename("/home/eric/file.js") => "file.js"
+                    basename("/home/file/") => ""
+                    basename("/home/file") => "file"
+    Name - Name of a filepath without the directories or extension
+                ex. file("/home/eric/file.js") => "file"
+                    file("file.js") => "file"
+    Extension - Extension of a filepath
+                ex. file("/home/eric/file.js") => ".js"
+                    file("/home/eric/file.doc") => ".doc"
+                    file("/home/eric/file") => ""
