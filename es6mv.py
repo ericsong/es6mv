@@ -3,7 +3,7 @@ import shutil
 import sys
 
 #GLOBALS
-INSPECT_DIR = "/home/reggi/play/components2/"
+INSPECT_DIR = "/home/reggi/c0dez/thm-dev/THM/frontend_v2/js/components/"
 
 #flags
 WRITE_ENABLED = False
@@ -105,16 +105,15 @@ for filepath in inspect_files:
         
         if (os.path.basename(extractImportFilepath(line)) == src_basename):
             newfilepath = os.path.relpath(output_filename, os.path.dirname(inspect_file.name))
-            print(dest_realpath)
-            print(os.path.dirname(inspect_file.name))
-            print(newfilepath)
             newfilepath = os.path.splitext(newfilepath)[0]
-            print(newfilepath)
+            newfilepath = appendDotSlash(newfilepath)
             inspect_output_file.write(dumbGenerateImportStatement(line, newfilepath))
             print(filepath)
             print("Old: " + line.rstrip())
             print("New: " + dumbGenerateImportStatement(line, newfilepath).rstrip())
             changes_made = True
+        else:
+            inspect_output_file.write(line)
 
     inspect_output_file.close()
     if (changes_made):
