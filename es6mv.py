@@ -69,7 +69,7 @@ def generateNewImportStatement(line, dest_dir):
     filepath = parsed[1]
     cwd = os.getcwd()
     os.chdir(src_dir)
-    newfilepath = os.path.relpath(os.path.realpath(filepath), os.path.dirname(dest_dir))
+    newfilepath = os.path.relpath(os.path.realpath(filepath), dest_dir)
     os.chdir(cwd)
 
     newfilepath = appendDotSlash(newfilepath)
@@ -88,7 +88,7 @@ for line in f:
         output_file.write(line)
         continue
     
-    newImportStatement = generateNewImportStatement(line, dest_realpath)
+    newImportStatement = generateNewImportStatement(line, dest_dir)
     output_file.write(newImportStatement)
 output_file.close()
 
