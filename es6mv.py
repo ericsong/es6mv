@@ -2,36 +2,49 @@ import os
 import shutil
 import sys
 
-#GLOBALS
+# GLOBALS
 INSPECT_DIR = os.environ['ES6_INSPECT_DIR'] 
-
-#flags
-WRITE_ENABLED = False
-PRINT_ENABLED = False
 
 # check args
 if len(sys.argv) != 3:
     print("Invalid # of args")
     exit()
 
-src_filename = sys.argv[1]
-dest_filename = sys.argv[2]
+src_filepath = sys.argv[1]
+dest_filepath = sys.argv[2]
 
-f = open(src_filename, 'r')
+# calculate realpaths, dirs, filenames, names
+src_realpath = os.path.realpath(src_filepath)
+dest_realpath = os.path.realpath(dest_filepath)
 
-src_realpath = os.path.realpath(src_filename)
-dest_realpath = os.path.realpath(dest_filename)
-
-src_dir = os.path.dirname(src_realpath)
-
-src_basename = os.path.splitext(os.path.basename(src_realpath))[0]
+if (os.path.isdir(src_realpath)):
+    print("ERROR: src file cannot be a directory")
+    exit()
+else:
+    src_realdir = os.path.dirname(src_realpath)
 
 if (os.path.isdir(dest_realpath)):
-    dest_dir = dest_realpath
-    output_filename = os.path.join(dest_dir, os.path.basename(src_realpath))
+    dest_realdir = dest_realpath
 else:
-    dest_dir = os.path.dirname(dest_realpath)
-    output_filename = dest_realpath
+    dest_realdir = os.path.dirname(dest_realpath)
+
+# calculate output filepath
+if (os.path.isdir(dest_realpath)):
+    output_filepath = os.path.join(dest_realdir, os.path.basename(src_realpath))
+else:
+    output_filepath = dest_realpath
+
+src_filename = os.path.basename(src_realpath)
+dest_filename = os.path.basename(dest_realpath)
+
+src_name = os.path.splitext(src_filename)[0]
+dest_name = os.path.splitext(dest_filename)[0]
+
+def extractFileFromFilepath(fp):
+    return os.path.splitext(fp)[0]
+
+def extractExtensionFromFilepath(fp):
+    return os.path.splitext(fp)[1]
 
 def getInspectFiles():
     inspect_files = []
@@ -58,37 +71,63 @@ def isRelativeImport(line):
 def extractImportFilepath(line):
     return line.split("'")[1]
 
-def appendDotSlash(fp):
+def prefixDotSlash(fp):
     if (not (fp.startswith('./') or fp.startswith('../'))):
         return "./" + fp
     else:
         return fp
 
-def generateNewImportStatement(line, dest_dir):
+def getDir(filepath):
+    if (os.path.isdir(filepath)):
+        return filepath
+    else:
+        return os.path.dirname(filepath)
+
+def realpathOfRelativeTargetFromSrc(src_realpath, target_relpath):
+    save_cwd = os.getcwd()
+    src_cwd = getDir(src_realpath)
+    
+    os.chdir(src_cwd)
+    realpath = os.path.realpath(target_relpath)
+    os.chdir(save_cwd)
+
+    return realpath
+
+def generateNewRelativePath(target_realpath, src_realdir):
+    return os.path.relpath(target_realpath, src_realdir)
+
+def generateNewImportStatement(line, dest_realdir):
     parsed = line.split("'")
     filepath = parsed[1]
     cwd = os.getcwd()
-    os.chdir(src_dir)
-    newfilepath = os.path.relpath(os.path.realpath(filepath), dest_dir)
+    os.chdir(src_realdir)
+    newfilepath = os.path.relpath(os.path.realpath(filepath), dest_realdir)
     os.chdir(cwd)
 
-    newfilepath = appendDotSlash(newfilepath)
+    newfilepath = prefixDotSlash(newfilepath)
 
     parsed[1] = "'" + newfilepath + "'"
     return "".join(parsed)
 
-def dumbGenerateImportStatement(line, fp):
+def generateImportStatement(line, fp):
+    ### add error handler
     parsed = line.split("'")
+    fp = extractFileFromFilepath(fp)
+    fp = prefixDotSlash(fp)
     parsed[1] = "'" + fp + "'"
     return "".join(parsed)
 
-output_file = open(output_filename, 'w')
+f = open(src_filepath, 'r')
+output_file = open(output_filepath, 'w')
 for line in f:
     if (not isRelativeImport(line)):
         output_file.write(line)
         continue
-    
-    newImportStatement = generateNewImportStatement(line, dest_dir)
+
+    target_relpath = line.split("'")[1]
+    target_realpath = realpathOfRelativeTargetFromSrc(src_realpath, target_relpath)
+    new_relpath = generateNewRelativePath(target_realpath, dest_realdir)
+    newImportStatement = generateImportStatement(line, new_relpath)
     output_file.write(newImportStatement)
 output_file.close()
 
@@ -103,14 +142,12 @@ for filepath in inspect_files:
             inspect_output_file.write(line)
             continue
         
-        if (os.path.basename(extractImportFilepath(line)) == src_basename):
-            newfilepath = os.path.relpath(output_filename, os.path.dirname(inspect_file.name))
-            newfilepath = os.path.splitext(newfilepath)[0]
-            newfilepath = appendDotSlash(newfilepath)
-            inspect_output_file.write(dumbGenerateImportStatement(line, newfilepath))
+        if (os.path.basename(extractImportFilepath(line)) == src_name):
+            newfilepath = os.path.relpath(output_filepath, os.path.dirname(inspect_file.name))
+            inspect_output_file.write(generateImportStatement(line, newfilepath))
             print(filepath)
             print("Old: " + line.rstrip())
-            print("New: " + dumbGenerateImportStatement(line, newfilepath).rstrip())
+            print("New: " + generateImportStatement(line, newfilepath).rstrip())
             changes_made = True
         else:
             inspect_output_file.write(line)
