@@ -3,7 +3,7 @@ import shutil
 import sys
 
 #GLOBALS
-INSPECT_DIR = "/home/reggi/c0dez/thm-dev/THM/frontend_v2/js/components/"
+INSPECT_DIR = os.environ['ES6_INSPECT_DIR'] 
 
 #flags
 WRITE_ENABLED = False
