@@ -1,1 +1,4 @@
 -add overwrite check
+-add check for same src/dest basename
+-create tests
+-use environment var for inspect dir
