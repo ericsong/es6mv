@@ -1,6 +1,9 @@
 import os
 import sys
 
+#GLOBALS
+INSPECT_DIR = "/home/reggi/c0dez/thm-dev/THM/frontend_v2/js/components/"
+
 #flags
 WRITE_ENABLED = False
 PRINT_ENABLED = False
@@ -20,6 +23,8 @@ dest_realpath = os.path.realpath(dest_filename)
 
 src_dir = os.path.dirname(src_realpath)
 
+src_basename = os.path.splitext(os.path.basename(src_realpath))[0]
+
 if (os.path.isdir(dest_realpath)):
     dest_dir = dest_realpath
     output_filename = os.path.join(dest_dir, os.path.basename(src_realpath))
@@ -29,14 +34,27 @@ else:
 
 output_file = open(output_filename, 'w')
 
-def isRelativeImport(line):
-    if (line.startswith('import ')):
-        filepath = line.split("'")[1]
-        if (filepath.startswith('./') or 
-            filepath.startswith('../')):
-                return True
+def getInspectFiles():
+    inspect_files = []
+    for path, subdirs, files in os.walk(INSPECT_DIR):
+        for name in files:
+            inspect_files.append(os.path.join(path, name))
+    return inspect_files
 
-    return False
+def isRelativeImport(line):
+    if (not line.startswith('import ')):
+        return False
+
+    splits = line.split("'")
+    if(len(splits) < 2):
+        return False
+    
+    filepath = splits[1]
+
+    if (not(filepath.startswith('./') or filepath.startswith('../'))):
+        return False
+
+    return True
 
 def extractImportFilepath(line):
     return line.split("'")[1]
@@ -62,3 +80,15 @@ for line in f:
     
     newImportStatement = generateNewImportStatement(line, dest_realpath)
     output_file.write(newImportStatement)
+
+inspect_files = getInspectFiles()
+for filepath in inspect_files:
+    inspect_file = open(filepath, 'r')
+
+    for line in inspect_file:
+        if(not isRelativeImport(line)):
+            continue
+
+        if (os.path.basename(extractImportFilepath(line)) == src_basename):
+            print(inspect_file.name)
+            print(line)
