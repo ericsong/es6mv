@@ -5,14 +5,6 @@ import sys
 # GLOBALS
 INSPECT_DIR = os.environ['ES6_INSPECT_DIR'] 
 
-# check args
-if len(sys.argv) != 3:
-    print("Invalid # of args")
-    exit()
-
-src_filepath = sys.argv[1]
-dest_filepath = sys.argv[2]
-
 # helper functions
 def extractFileFromFilepath(fp):
     return os.path.splitext(fp)[0]
@@ -98,43 +90,60 @@ def getDirectoryOfFilepath(filepath):
         return os.path.dirname(filepath)
 
 # calculate realpaths, dirs, filenames, names
-src_realpath = os.path.realpath(src_filepath)
-dest_realpath = os.path.realpath(dest_filepath)
+def moveFile(src_filepath, dest_filepath):
+    src_realpath = os.path.realpath(src_filepath)
+    dest_realpath = os.path.realpath(dest_filepath)
 
-src_realdir = getDirectoryOfFilepath(src_realpath)
-dest_realdir = getDirectoryOfFilepath(dest_realpath)
+    src_filename = os.path.basename(src_realpath)
+    dest_filename = os.path.basename(dest_realpath)
 
-output_filepath = os.path.join(dest_realdir, os.path.basename(src_realpath))
+    src_realdir = getDirectoryOfFilepath(src_realpath)
+    dest_realdir = getDirectoryOfFilepath(dest_realpath)
 
-src_filename = os.path.basename(src_realpath)
-dest_filename = os.path.basename(dest_realpath)
+    output_filepath = os.path.join(dest_realdir, os.path.basename(src_realpath))
 
-src_name = os.path.splitext(src_filename)[0]
-dest_name = os.path.splitext(dest_filename)[0]
-#src_filepath, output_filepath, src_realpath, dest_realdir
-f = open(src_filepath, 'r')
-output_file = open(output_filepath, 'w')
-for line in f:
-    if (not isRelativeImport(line)):
-        output_file.write(line)
-        continue
+    src_name = os.path.splitext(src_filename)[0]
+    dest_name = os.path.splitext(dest_filename)[0]
+    #src_filepath, output_filepath, src_realpath, dest_realdir
+    f = open(src_filepath, 'r')
+    output_file = open(output_filepath, 'w')
+    for line in f:
+        if (not isRelativeImport(line)):
+            output_file.write(line)
+            continue
 
-    target_relpath = line.split("'")[1]
-    target_realpath = realpathOfRelativeTargetFromSrc(src_realpath, target_relpath)
-    new_relpath = generateNewRelativePath(target_realpath, dest_realdir)
-    newImportStatement = generateImportStatement(line, new_relpath)
-    output_file.write(newImportStatement)
-    print("Editing file: " + output_filepath)
-    print("Old: " + line.rstrip())
-    print("New: " + newImportStatement.rstrip())
-    print("")
-output_file.close()
+        target_relpath = line.split("'")[1]
+        target_realpath = realpathOfRelativeTargetFromSrc(src_realpath, target_relpath)
+        new_relpath = generateNewRelativePath(target_realpath, dest_realdir)
+        newImportStatement = generateImportStatement(line, new_relpath)
+        output_file.write(newImportStatement)
+        print("Editing file: " + output_filepath)
+        print("Old: " + line.rstrip())
+        print("New: " + newImportStatement.rstrip())
+        print("")
+    output_file.close()
 
-inspect_files = getInspectFiles()
-for filepath in inspect_files:
+    #delete original file
+    os.remove(src_filepath)
+
+def inspectFileForChange(inspect_filepath, src_filepath, dest_filepath):
+    src_realpath = os.path.realpath(src_filepath)
+    dest_realpath = os.path.realpath(dest_filepath)
+
+    src_filename = os.path.basename(src_realpath)
+    dest_filename = os.path.basename(dest_realpath)
+
+    src_realdir = getDirectoryOfFilepath(src_realpath)
+    dest_realdir = getDirectoryOfFilepath(dest_realpath)
+
+    output_filepath = os.path.join(dest_realdir, os.path.basename(src_realpath))
+
+    src_name = os.path.splitext(src_filename)[0]
+    dest_name = os.path.splitext(dest_filename)[0]
+
     changes_made = False
-    inspect_file = open(filepath, 'r')
-    inspect_output_file = open(filepath + ".tmp", 'w') 
+    inspect_file = open(inspect_filepath, 'r')
+    inspect_output_file = open(inspect_filepath + ".tmp", 'w') 
 
     for line in inspect_file:
         if(not isRelativeImport(line)):
@@ -144,7 +153,7 @@ for filepath in inspect_files:
         if (extractFileFromFilepath(os.path.basename(extractImportFilepath(line))) == src_name):
             newfilepath = os.path.relpath(output_filepath, os.path.dirname(inspect_file.name))
             inspect_output_file.write(generateImportStatement(line, newfilepath))
-            print("Editing file: " + filepath)
+            print("Editing file: " + inspect_filepath)
             print("Old: " + line.rstrip())
             print("New: " + generateImportStatement(line, newfilepath).rstrip())
             print("")
@@ -154,11 +163,23 @@ for filepath in inspect_files:
 
     inspect_output_file.close()
     if (changes_made):
-        shutil.move(filepath + ".tmp", filepath)
+        shutil.move(inspect_filepath + ".tmp", inspect_filepath)
     else:
-        os.remove(filepath + ".tmp")
+        os.remove(inspect_filepath + ".tmp")
 
-#delete original file
-os.remove(src_realpath)
+def moveAndInspectForChanges(src_filepath, dest_filepath):
+    moveFile(src_filepath, dest_filepath)
 
+    inspect_files = getInspectFiles()
+    for filepath in inspect_files:
+        inspectFileForChange(filepath, src_filepath, dest_filepath)
 
+# check args
+if len(sys.argv) != 3:
+    print("Invalid # of args")
+    exit()
+
+src_filepath = sys.argv[1]
+dest_filepath = sys.argv[2]
+
+moveAndInspectForChanges(src_filepath, dest_filepath)
