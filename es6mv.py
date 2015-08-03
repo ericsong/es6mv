@@ -13,33 +13,7 @@ if len(sys.argv) != 3:
 src_filepath = sys.argv[1]
 dest_filepath = sys.argv[2]
 
-# calculate realpaths, dirs, filenames, names
-src_realpath = os.path.realpath(src_filepath)
-dest_realpath = os.path.realpath(dest_filepath)
-
-if (os.path.isdir(src_realpath)):
-    print("ERROR: src file cannot be a directory")
-    exit()
-else:
-    src_realdir = os.path.dirname(src_realpath)
-
-if (os.path.isdir(dest_realpath)):
-    dest_realdir = dest_realpath
-else:
-    dest_realdir = os.path.dirname(dest_realpath)
-
-# calculate output filepath
-if (os.path.isdir(dest_realpath)):
-    output_filepath = os.path.join(dest_realdir, os.path.basename(src_realpath))
-else:
-    output_filepath = dest_realpath
-
-src_filename = os.path.basename(src_realpath)
-dest_filename = os.path.basename(dest_realpath)
-
-src_name = os.path.splitext(src_filename)[0]
-dest_name = os.path.splitext(dest_filename)[0]
-
+# helper functions
 def extractFileFromFilepath(fp):
     return os.path.splitext(fp)[0]
 
@@ -117,6 +91,27 @@ def generateImportStatement(line, fp):
     parsed[1] = "'" + fp + "'"
     return "".join(parsed)
 
+def getDirectoryOfFilepath(filepath):
+    if (os.path.isdir(filepath)):
+        return filepath
+    else:
+        return os.path.dirname(filepath)
+
+# calculate realpaths, dirs, filenames, names
+src_realpath = os.path.realpath(src_filepath)
+dest_realpath = os.path.realpath(dest_filepath)
+
+src_realdir = getDirectoryOfFilepath(src_realpath)
+dest_realdir = getDirectoryOfFilepath(dest_realpath)
+
+output_filepath = os.path.join(dest_realdir, os.path.basename(src_realpath))
+
+src_filename = os.path.basename(src_realpath)
+dest_filename = os.path.basename(dest_realpath)
+
+src_name = os.path.splitext(src_filename)[0]
+dest_name = os.path.splitext(dest_filename)[0]
+#src_filepath, output_filepath, src_realpath, dest_realdir
 f = open(src_filepath, 'r')
 output_file = open(output_filepath, 'w')
 for line in f:
@@ -129,6 +124,10 @@ for line in f:
     new_relpath = generateNewRelativePath(target_realpath, dest_realdir)
     newImportStatement = generateImportStatement(line, new_relpath)
     output_file.write(newImportStatement)
+    print("Editing file: " + output_filepath)
+    print("Old: " + line.rstrip())
+    print("New: " + newImportStatement.rstrip())
+    print("")
 output_file.close()
 
 inspect_files = getInspectFiles()
@@ -141,13 +140,14 @@ for filepath in inspect_files:
         if(not isRelativeImport(line)):
             inspect_output_file.write(line)
             continue
-        
-        if (os.path.basename(extractImportFilepath(line)) == src_name):
+
+        if (extractFileFromFilepath(os.path.basename(extractImportFilepath(line))) == src_name):
             newfilepath = os.path.relpath(output_filepath, os.path.dirname(inspect_file.name))
             inspect_output_file.write(generateImportStatement(line, newfilepath))
-            print(filepath)
+            print("Editing file: " + filepath)
             print("Old: " + line.rstrip())
             print("New: " + generateImportStatement(line, newfilepath).rstrip())
+            print("")
             changes_made = True
         else:
             inspect_output_file.write(line)
@@ -160,3 +160,5 @@ for filepath in inspect_files:
 
 #delete original file
 os.remove(src_realpath)
+
+
