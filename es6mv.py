@@ -162,11 +162,6 @@ def inspectFileForChange(inspect_filepath, src_filepath, dest_filepath):
         if (import_realpath[-3:] != ".js"):
             import_realpath = import_realpath + ".js"
 
-        print(import_realpath)
-        print(src_realpath)
-
-#        if (extractFileFromFilepath(os.path.basename(extractImportFromStatement(line))) == src_name):
-
         if (import_realpath == src_realpath):
             newfilepath = os.path.relpath(output_filepath, os.path.dirname(inspect_file.name))
             inspect_output_file.write(generateImportStatement(line, newfilepath))
@@ -188,10 +183,13 @@ def moveAndInspectForChanges(src_filepath, dest_filepath):
     if(os.path.isdir(src_filepath)):
         if(os.path.isdir(dest_filepath)):
             #dest is dir, move src dir inside dest_filepath
+            if (src_filepath[-1:] == '/'):
+                src_filepath = src_filepath[:-1]
+            if(dest_filepath[-1:] == '/'):
+                dest_filepath = dest_filepath[:-1]
+
             dirname = os.path.basename(src_filepath)
-            print(dirname)
             newdirname = os.path.join(dest_filepath, dirname)
-            print(newdirname)
 
             print("Making directory at: " + newdirname)
 
@@ -201,13 +199,18 @@ def moveAndInspectForChanges(src_filepath, dest_filepath):
                 src_file = os.path.join(src_filepath, file)
                 moveAndInspectForChanges(src_file, newdirname)
 
+            shutil.rmtree(src_filepath)
         elif(os.path.isfile(dest_filepath)):
             #dest is regular file, error out
             print('ERROR: dest is a regular file')
             exit(1)
         elif(not os.path.exists(dest_filepath)):
             #dest DNE, create dir at dest_filepath
-            print('hi')
+            os.mkdir(dest_filepath)
+            for file in os.listdir(src_filepath):
+                src_file = os.path.join(src_filepath, file)
+                moveAndInspectForChanges(src_file, dest_filepath)
+            shutil.rmtree(src_filepath)
         else:
             #some weird case like symbolic links, error out
             print('ERROR: unhandled file error')
