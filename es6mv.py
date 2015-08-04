@@ -34,7 +34,8 @@ def isRelativeImport(line):
 
     return True
 
-def extractImportFilepath(line):
+#rename to something better
+def extractImportFromStatement(line):
     return line.split("'")[1]
 
 def prefixDotSlash(fp):
@@ -150,7 +151,23 @@ def inspectFileForChange(inspect_filepath, src_filepath, dest_filepath):
             inspect_output_file.write(line)
             continue
 
-        if (extractFileFromFilepath(os.path.basename(extractImportFilepath(line))) == src_name):
+        save_cwd = os.getcwd()
+
+        inspect_wd = getDir(inspect_filepath)
+        os.chdir(inspect_wd)
+        import_realpath = os.path.realpath(extractImportFromStatement(line))
+
+        os.chdir(save_cwd)
+
+        if (import_realpath[-3:] != ".js"):
+            import_realpath = import_realpath + ".js"
+
+        print(import_realpath)
+        print(src_realpath)
+
+#        if (extractFileFromFilepath(os.path.basename(extractImportFromStatement(line))) == src_name):
+
+        if (import_realpath == src_realpath):
             newfilepath = os.path.relpath(output_filepath, os.path.dirname(inspect_file.name))
             inspect_output_file.write(generateImportStatement(line, newfilepath))
             print("Editing file: " + inspect_filepath)
@@ -168,7 +185,35 @@ def inspectFileForChange(inspect_filepath, src_filepath, dest_filepath):
         os.remove(inspect_filepath + ".tmp")
 
 def moveAndInspectForChanges(src_filepath, dest_filepath):
-    moveFile(src_filepath, dest_filepath)
+    if(os.path.isdir(src_filepath)):
+        if(os.path.isdir(dest_filepath)):
+            #dest is dir, move src dir inside dest_filepath
+            dirname = os.path.basename(src_filepath)
+            print(dirname)
+            newdirname = os.path.join(dest_filepath, dirname)
+            print(newdirname)
+
+            print("Making directory at: " + newdirname)
+
+            os.mkdir(newdirname)
+            
+            for file in os.listdir(src_filepath):
+                src_file = os.path.join(src_filepath, file)
+                moveAndInspectForChanges(src_file, newdirname)
+
+        elif(os.path.isfile(dest_filepath)):
+            #dest is regular file, error out
+            print('ERROR: dest is a regular file')
+            exit(1)
+        elif(not os.path.exists(dest_filepath)):
+            #dest DNE, create dir at dest_filepath
+            print('hi')
+        else:
+            #some weird case like symbolic links, error out
+            print('ERROR: unhandled file error')
+            exit(1)
+    else:
+        moveFile(src_filepath, dest_filepath)
 
     inspect_files = getInspectFiles()
     for filepath in inspect_files:
