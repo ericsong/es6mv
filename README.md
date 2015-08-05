@@ -13,3 +13,7 @@ CLI util for moving es6 javascript files and renaming imports
 * Run command `python es6mv.py {YOUR_SOURCE_FILE} {YOUR_DESTINATION_FILE}`
 * (Optional) Set an alias `alias es6mv='python es6mv.py'`  
   Run command `es6mv.py {YOUR_SOURCE_FILE} {YOUR_DESTINATION_FILE}`
+
+#### Misc
+* Tested on Linux and Mac OS
+* Untested on Windows
