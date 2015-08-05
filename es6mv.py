@@ -3,7 +3,7 @@ import shutil
 import sys
 
 # GLOBALS
-INSPECT_DIR = os.environ['ES6_INSPECT_DIR'] 
+INSPECT_DIR = os.environ['ES6MV_INSPECT_DIR']
 
 # helper functions
 def extractFileFromFilepath(fp):

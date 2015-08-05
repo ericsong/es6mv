@@ -1,6 +1,7 @@
 -add overwrite check
 -add check for same src/dest basename
 -movign to same file, deletes it
+-move SOURCE(S) to DIRECTORY
 
 tests...
 - test directories with and without /
