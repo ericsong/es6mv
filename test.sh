@@ -3,7 +3,7 @@
 rm -r ./testfolder
 cp -r ./backup_folder ./testfolder
 
-export ES6_INSPECT_DIR="./testfolder/js/components/"
+export ES6MV_INSPECT_DIR="./testfolder/js/"
 python es6mv.py ./testfolder/js/components/modules/Icon.js ./testfolder/js/components/
 python es6mv.py ./testfolder/js/components/CourseLayout.js ./testfolder/js/components/CourseContent/
 python es6mv.py ./testfolder/js/components/modules/ModalTrigger.js ./testfolder/js/components/modules/modals/
