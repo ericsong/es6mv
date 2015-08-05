@@ -1,6 +1,5 @@
 -add overwrite check
 -add check for same src/dest basename
--create tests
 -movign to same file, deletes it
 
 tests...
