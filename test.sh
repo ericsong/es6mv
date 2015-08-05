@@ -1,4 +1,5 @@
 #!/bin/bash
+#running tests on an actual project not included in this repo. will fail if you run it
 
 rm -r ./testfolder
 cp -r ./backup_folder ./testfolder
