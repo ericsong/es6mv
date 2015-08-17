@@ -222,12 +222,17 @@ def moveAndInspectForChanges(src_filepath, dest_filepath):
     for filepath in inspect_files:
         inspectFileForChange(filepath, src_filepath, dest_filepath)
 
-# check args
+"""Arguments validation"""
+# correct number of args
 if len(sys.argv) != 3:
     print("Invalid # of args")
     exit()
 
 src_filepath = sys.argv[1]
 dest_filepath = sys.argv[2]
+
+if os.path.samefile(src_filepath, dest_filepath):
+    print("Source file and destination file cannot be the same.")
+    exit()
 
 moveAndInspectForChanges(src_filepath, dest_filepath)
