@@ -1,5 +1,5 @@
 # es6mv
-CLI tool for moving es6 javascript files in a project
+CLI tool for moving es6 javascript files in a project  
 Edits module imports to work properly in moved location
 
 ### What does it do?
